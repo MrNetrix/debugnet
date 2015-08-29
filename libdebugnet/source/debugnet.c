@@ -20,6 +20,7 @@ static int debugnet_initialized=0;
 int SocketFD = -1;
 static void *net_memory = NULL;
 static SceNetInAddr vita_addr;
+struct SceNetSockaddrIn stSockAddr;
 int sceClibVsnprintf(char *, SceSize, const char *, va_list); 
 int logLevel=INFO;
 
@@ -38,7 +39,7 @@ void debugNetUDPPrintf(const char* fmt, ...)
   va_start(arg, fmt);
   sceClibVsnprintf(buffer, sizeof(buffer), fmt, arg);
   va_end(arg);
-  sceNetSend(SocketFD, buffer, strlen(buffer), 0);
+  sceNetSendto(SocketFD, buffer, strlen(buffer), 0, (struct SceNetSockaddr *)&stSockAddr, sizeof stSockAddr);
 }
 /**
  * Log Level printf for debugnet library 
@@ -113,7 +114,6 @@ int debugNetInit(char *serverIp, int port, int level)
     int ret;
     SceNetInitParam initparam;
     SceNetCtlInfo info;
-    struct SceNetSockaddrIn stSockAddr;
 	debugNetSetLogLevel(level);
     if (debugnet_initialized) {
         return debugnet_initialized;
@@ -151,14 +151,14 @@ int debugNetInit(char *serverIp, int port, int level)
         PSP2_NET_AF_INET , PSP2_NET_SOCK_DGRAM, PSP2_NET_IPPROTO_UDP);
    
     memset(&stSockAddr, 0, sizeof stSockAddr);
+
+    int broadcast = 1;
+    sceNetSetsockopt(SocketFD, PSP2_NET_SOL_SOCKET, PSP2_NET_SO_BROADCAST, &broadcast, sizeof(broadcast));
 	
 	/*Populate SceNetSockaddrIn structure values*/
     stSockAddr.sin_family = PSP2_NET_AF_INET;
     stSockAddr.sin_port = sceNetHtons(port);
     sceNetInetPton(PSP2_NET_AF_INET, serverIp, &stSockAddr.sin_addr);
-
-	/*Connect socket to server*/
-    sceNetConnect(SocketFD, (struct SceNetSockaddr *)&stSockAddr, sizeof stSockAddr);
 
 	/*Show log on pc/mac side*/
 	debugNetUDPPrintf("debugnet initialized\n");
