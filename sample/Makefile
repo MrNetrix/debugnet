@@ -10,7 +10,7 @@ TARGET		:= debugnetsample
 
 OBJS= main.o
 
-LIBS=-ldebugnet -lSceNet_stub -lSceNetCtl_stub 
+LIBS=-ldebugnet -lSceSysmodule_stub -lSceNet_stub -lSceNetCtl_stub 
 
 PREFIX   = arm-vita-eabi
 AS	     = $(PREFIX)-as
@@ -28,7 +28,7 @@ $(TARGET).velf: $(TARGET).elf
 #advice from xyzz strip before create elf
 	arm-vita-eabi-strip -g $<
 #i put db.json there use your location 
-	vita-elf-create  $< $@ $(VITASDK)/bin/db.json
+	vita-elf-create  $< $@
 
 $(TARGET).elf: $(OBJS)
 	$(CC)   $^  $(CFLAGS) $(LIBS) -o $@ 
